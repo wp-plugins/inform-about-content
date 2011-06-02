@@ -1,5 +1,5 @@
 === Inform about Content ===
-Contributors: Inpsyde, Bueltge, jottlieb, nullbyte
+Contributors: Inpsyde, Bueltge, nullbyte
 Tags: mail, comment, post
 Requires at least: 3.0
 Tested up to: 3.1.3
