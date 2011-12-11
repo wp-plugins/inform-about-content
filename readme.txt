@@ -12,7 +12,7 @@ Plugin which sends emails to us from WordPress, for comments and new posts, exce
 
 = Localizations =
 * Thanks to [Frank B&uuml;ltge](http://bueltge.de/ "Frank B&uuml;ltge") for german language file
-* Thanks to [Brian from InMotion Hosting](http://www.inmotionhosting.com/) for spanish translation
+* Thanks to [Brian Flores](http://www.inmotionhosting.com/) for spanish translation
 
 == Installation ==
 = Requirements =
