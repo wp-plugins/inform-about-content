@@ -2,7 +2,7 @@
 Contributors: Inpsyde, Bueltge
 Tags: mail, comment, post
 Requires at least: 3.0
-Tested up to: 3.3
+Tested up to: 3.4-Beta3
 Stable tag: 0.0.3
 
 Informs all users of a blog about a new post and approved comments via email
@@ -13,6 +13,7 @@ Plugin which sends emails to us from WordPress, for comments and new posts, exce
 = Localizations =
 * Thanks to [Frank B&uuml;ltge](http://bueltge.de/ "Frank B&uuml;ltge") for german language file
 * Thanks to [Brian Flores](http://www.inmotionhosting.com/) for spanish translation
+* Lithuanian translation files by [Vincent G](http://www.host1plus.com)
 
 == Installation ==
 = Requirements =
