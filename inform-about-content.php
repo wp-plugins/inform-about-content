@@ -1,17 +1,23 @@
 <?php
 /**
  * Plugin Name: Inform about Content
- * Plugin URI: http://inpsyde.com/
+ * Plugin URI:  http://wordpress.org/extend/plugins/inform-about-content/
  * Text Domain: inform_about_content
  * Domain Path: /languages
  * Description: Informs all users of a blog about a new post and approved comments via email
- * Author: Frank Bültge
- * Version: 0.0.3
- * Licence: GPLv2
- * Author URI: http://bueltge.de
- * Last Change: 31.05.2011
+ * Author:      Inpsyde GmbH
+ * Version:     0.0.4
+ * Licence:     GPLv3
+ * Author URI:  http://inpsyde.com/
  */
 
+/**
+ * Informs all users of a blog about a new post and approved comments via email
+ * 
+ * @author   fb
+ * @since    0.0.1
+ * @version  07/19/2012
+ */
 if ( ! class_exists( 'Inform_About_Content' ) ) {
 	// add plugin to WP
 	if ( function_exists( 'add_action' ) ) {
@@ -20,13 +26,14 @@ if ( ! class_exists( 'Inform_About_Content' ) ) {
 	
 	class Inform_About_Content {
 		
-		static private $classobj 		= NULL;
+		static private $classobj      = NULL;
 		
 		// hard values, alternative use the settings on user profile
 		// bool for active mail for a new post
-		public $inform_about_posts 		= TRUE;
+		public $inform_about_posts    = TRUE;
+		
 		// bool for active mail for a new comment
-		public $inform_about_comments 	= TRUE;
+		public $inform_about_comments	= TRUE;
 		
 		// strings for mail
 		public $mail_string_new_comment_to;
@@ -61,7 +68,7 @@ if ( ! class_exists( 'Inform_About_Content' ) ) {
 		public function __construct() {
 			// set srings for mail
 			$this -> mail_string_new_comment_to	= __( 'new comment to', $this -> get_textdomain() );
-			$this -> mail_string_to				= __( 'to', $this -> get_textdomain() );
+			$this -> mail_string_to				= __( 'to:', $this -> get_textdomain() );
 			$this -> mail_string_by				= __( 'by', $this -> get_textdomain() );
 			$this -> mail_string_url			= __( 'URL', $this -> get_textdomain() );
 			
@@ -213,8 +220,7 @@ if ( ! class_exists( 'Inform_About_Content' ) ) {
 					// email addresses
 					$to = $this -> get_members( $user_mail->user_email, 'comment_subscription' );
 					// email subject
-					$subject = get_option( 'blogname' ) . ': ' . 
-						$this -> mail_string_new_comment_to . ' ' . $post_data -> post_title;
+					$subject = get_option( 'blogname' ) . ': ' . $post_data -> post_title;
 					// message content
 					$message = $comment_data -> comment_content . ' ' . PHP_EOL . 
 						$this -> mail_string_by . ' ' . 

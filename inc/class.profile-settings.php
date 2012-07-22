@@ -41,7 +41,7 @@ class Iac_Profile_Settings {
 		// textdomain from parent class
 		$this -> textdomain = Inform_About_Content :: get_textdomain();
 		
-		register_uninstall_hook(  __FILE__, 	array( $this, 'remove_author_meta_values' ) );
+		register_uninstall_hook(  __FILE__, 	array( 'Iac_Profile_Settings', 'remove_author_meta_values' ) );
 		
 		add_action( 'show_user_profile', 		array( $this, 'add_custom_profile_fields' ) );
 		add_action( 'edit_user_profile', 		array( $this, 'add_custom_profile_fields' ) );
@@ -70,7 +70,7 @@ class Iac_Profile_Settings {
 	 * @uses   delete_user_meta, get_users
 	 * @return void
 	 */
-	public function remove_author_meta_values() {
+	public static function remove_author_meta_values() {
 		global $blog_id;
 		
 		if ( isset( $blog_id ) && ! empty( $blog_id ) ) {
