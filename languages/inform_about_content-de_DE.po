@@ -19,27 +19,27 @@ msgstr ""
 "X-Poedit-SearchPath-0: .\n"
 "X-Textdomain-Support: yes"
 
-#: inc/class.profile-settings.php:97
+#: inc/class-Iac_Profile_Settings.php:104
 #@ inform_about_content
 msgid "Inform about Content?"
 msgstr "Information über neue Inhalte?"
 
-#: inc/class.profile-settings.php:102
+#: inc/class-Iac_Profile_Settings.php:109
 #@ inform_about_content
 msgid "Posts subscription"
 msgstr "Artikelabonnement"
 
-#: inc/class.profile-settings.php:107
+#: inc/class-Iac_Profile_Settings.php:114
 #@ inform_about_content
 msgid "Inform about new posts via e-mail, without your own posts."
 msgstr "Informiere dich über neue Artikel via E-Mail, ohne deine eigenen Artikel."
 
-#: inc/class.profile-settings.php:112
+#: inc/class-Iac_Profile_Settings.php:119
 #@ inform_about_content
 msgid "Comments subscription"
 msgstr "Kommentarabonnement"
 
-#: inc/class.profile-settings.php:117
+#: inc/class-Iac_Profile_Settings.php:124
 #@ inform_about_content
 msgid "Inform about new comments via e-mail, without your own comments."
 msgstr "Informiere dich über neue Kommentare via E-Mail, ohne deine eigenen Kommentare."
@@ -50,53 +50,63 @@ msgstr "Informiere dich über neue Kommentare via E-Mail, ohne deine eigenen Kom
 msgid "Inform about Content"
 msgstr "Inform about Content - Information über Inhalt"
 
-#. translators: plugin header field 'PluginURI'
+#. translators: plugin header field 'AuthorURI'
 #: inform-about-content.php:0
 #@ inform_about_content
 msgid "http://inpsyde.com/"
 msgstr ""
 
-#. translators: plugin header field 'Author'
-#: inform-about-content.php:0
+#: inform-about-content.php:120
 #@ inform_about_content
-msgid "Frank Bültge"
-msgstr ""
+msgid "new comment to"
+msgstr "neuer Kommentar zu"
 
-#. translators: plugin header field 'AuthorURI'
+#: inform-about-content.php:122
+#@ inform_about_content
+msgid "by"
+msgstr "von"
+
+#: inform-about-content.php:123
+#@ inform_about_content
+msgid "URL"
+msgstr "URL"
+
+#: inc/class-Iac_Settings.php:83
+#@ inform_about_content
+msgid "Inform About Content Settings"
+msgstr "Einstellungen für »Inform about content«"
+
+#: inc/class-Iac_Settings.php:90
+#@ inform_about_content
+msgid "Hide E-Mail addresses to other recipients (BCC)"
+msgstr "Verberge E-Mailadressen vor anderen Empängern (Bcc)."
+
+#. translators: plugin header field 'PluginURI'
 #: inform-about-content.php:0
 #@ inform_about_content
-msgid "http://bueltge.de"
+msgid "http://wordpress.org/extend/plugins/inform-about-content/"
 msgstr ""
 
 #. translators: plugin header field 'Description'
 #: inform-about-content.php:0
 #@ inform_about_content
-msgid "Inform about post and approved comments via mail to all users of a blog"
-msgstr "Informiert via E-Mail über Artikel und genehmigte Kommentare an alle Benutzer eines Blogs"
+msgid "Informs all users of a blog about a new post and approved comments via email"
+msgstr "Informiere alle Nutzer des Blogs über neue Artikel und freigegebene Kommentare via E-Mail."
+
+#. translators: plugin header field 'Author'
+#: inform-about-content.php:0
+#@ inform_about_content
+msgid "Inpsyde GmbH"
+msgstr ""
 
 #. translators: plugin header field 'Version'
 #: inform-about-content.php:0
 #@ inform_about_content
-msgid "0.0.3"
+msgid "0.0.5-RC1"
 msgstr ""
 
-#: inform-about-content.php:64
+#: inform-about-content.php:121
 #@ inform_about_content
-msgid "new comment to"
-msgstr "neuer Kommentar zu"
-
-#: inform-about-content.php:65
-#@ inform_about_content
-msgid "to"
-msgstr "zu"
-
-#: inform-about-content.php:66
-#@ inform_about_content
-msgid "by"
-msgstr "von"
-
-#: inform-about-content.php:67
-#@ inform_about_content
-msgid "URL"
-msgstr "URL"
+msgid "to:"
+msgstr ""
 
