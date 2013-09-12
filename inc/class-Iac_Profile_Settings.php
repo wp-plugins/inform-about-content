@@ -101,7 +101,7 @@ class Iac_Profile_Settings {
 		extract( $user_settings ); #'inform_about_posts', 'inform_about_comments'
 
 	?>
-		<h3><?php _e( 'Inform about Content?', $this->get_textdomain() ); ?></h3>
+		<h3><?php _e( 'Informer?', $this->get_textdomain() ); ?></h3>
 
 		<table class="form-table">
 			<tr id="post_subscription">

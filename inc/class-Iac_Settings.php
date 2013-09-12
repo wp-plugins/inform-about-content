@@ -80,7 +80,7 @@ class Iac_Settings {
 
 		add_settings_section(
 			$this->section,
-			__( 'Inform About Content Settings', Inform_About_Content::TEXTDOMAIN ),
+			__( 'Informer Settings', Inform_About_Content::TEXTDOMAIN ),
 			array( $this, 'description' ),
 			$this->page
 		);
