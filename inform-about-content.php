@@ -1,12 +1,12 @@
 <?php
 /**
- * Plugin Name: Inform about Content
+ * Plugin Name: Informer
  * Plugin URI:  http://wordpress.org/extend/plugins/inform-about-content/
  * Text Domain: inform_about_content
  * Domain Path: /languages
  * Description: Informs all users of a blog about a new post and approved comments via email
  * Author:      Inpsyde GmbH
- * Version:     0.0.5
+ * Version:     0.0.6-master
  * License:     GPLv3
  * Author URI:  http://inpsyde.com/
  */
@@ -14,9 +14,9 @@
 /**
  * Informs all users of a blog about a new post and approved comments via email
  *
- * @author   fb
+ * @author   fb, dn
  * @since    0.0.1
- * @version  09/05/2012
+ * @version  05/02/2013
  */
 
 if ( ! class_exists( 'Inform_About_Content' ) ) {
@@ -30,6 +30,10 @@ if ( ! class_exists( 'Inform_About_Content' ) ) {
 		# some default filters
 		add_filter( 'iac_post_message',    'strip_tags' );
 		add_filter( 'iac_comment_message', 'strip_tags' );
+
+		# since 0.0.6
+		add_filter( 'iac_post_message',    'strip_shortcodes' );
+		add_filter( 'iac_comment_message', 'strip_shortcodes' );
 	}
 
 	class Inform_About_Content {
@@ -131,14 +135,22 @@ if ( ! class_exists( 'Inform_About_Content' ) ) {
 			$settings = new Iac_Settings();
 			$this->options = $settings->options;
 			#apply a hook to get the current settings
-			add_filter( 'iac_get_options', array( $this, 'get_options' )  );
+			add_filter( 'iac_get_options', array( $this, 'get_options' ) );
 
 			add_action( 'admin_init', array( $this, 'localize_plugin' ), 9 );
 
 			if ( $this->inform_about_posts )
 				add_action( 'publish_post', array( $this, 'inform_about_posts' ) );
 			if ( $this->inform_about_comments )
-				add_action( 'comment_post', array( $this, 'inform_about_comment' ) );
+				add_action( 'wp_insert_comment', array( $this, 'inform_about_comment' ) );
+				// also possible is the hook comment_post
+			
+			// Disable the default core notification (filter ignores __return_false)
+			add_filter( 'pre_option_comments_notify', '__return_zero' );
+			
+			// load additional features
+			Iac_Threaded_Mails::get_instance();
+			Iac_Attach_Media::get_instance();
 		}
 
 		/**
@@ -198,18 +210,18 @@ if ( ! class_exists( 'Inform_About_Content' ) ) {
 				$meta_key, $meta_value, $meta_compare, $include_empty
 			);
 			$user_addresses = array();
-			
+
 			if ( ! is_array( $users ) || empty( $users ) )
 				return '';
 
 			foreach ( $users as $user ) {
-				
+
 				if ( $current_user_email === $user->data->user_email )
 					continue;
-					
+
 				$user_addresses[] = $user->data->user_email;
 			}
-			
+
 			return implode( ', ', $user_addresses );
 		}
 
@@ -291,11 +303,18 @@ if ( ! class_exists( 'Inform_About_Content' ) ) {
 				$subject = get_option( 'blogname' ) . ': ' . get_the_title( $post_data->ID );
 
 				// message content
-				$message = $post_data->post_content . ' ' . PHP_EOL .
-					$this->mail_string_by . ' ' .
-					get_the_author_meta( 'display_name', $user->ID ) . ' ' . PHP_EOL .
-					$this->mail_string_url . ': ' .
-					get_permalink( $post_id );
+				$message = array(
+					$post_data->post_content,
+					implode( ' ', array(
+						$this->mail_string_by,
+						get_the_author_meta( 'display_name', $user->ID )
+					) ),
+					implode( ': ', array(
+						$this->mail_string_url,
+						get_permalink( $post_id )
+					) )
+				);
+				$message = implode( PHP_EOL, $message );
 
 				# create header data
 				$headers = array();
@@ -307,19 +326,24 @@ if ( ! class_exists( 'Inform_About_Content' ) ) {
 
 				if ( $this->options[ 'send_by_bcc' ] ) {
 					$bcc = $to;
-					$to  = get_bloginfo( 'admin_email' );
+					$to = empty( $this->options[ 'bcc_to_recipient' ] )
+						? get_bloginfo( 'admin_email' )
+						: $this->options[ 'bcc_to_recipient' ];
 					$headers[ 'Bcc' ] = $bcc;
 				}
-				$to      = apply_filters( 'iac_post_to',      $to,      $this->options );
-				$subject = apply_filters( 'iac_post_subject', $subject, $this->options );
-				$message = apply_filters( 'iac_post_message', $message, $this->options );
-				$headers = apply_filters( 'iac_post_headers', $headers, $this->options );
+				$to          = apply_filters( 'iac_post_to',          $to,      $this->options, $post_id );
+				$subject     = apply_filters( 'iac_post_subject',     $subject, $this->options, $post_id );
+				$message     = apply_filters( 'iac_post_message',     $message, $this->options, $post_id );
+				$headers     = apply_filters( 'iac_post_headers',     $headers, $this->options, $post_id );
+				$attachments = apply_filters( 'iac_post_attachments', array(),  $this->options, $post_id );
+				$signature   = apply_filters( 'iac_post_signature',   '',       $this->options, $post_id );
 
 				$this->send_mail(
 					$to,
 					$subject,
-					$message,
-					$headers
+					$this->append_signature( $message, $signature ),
+					$headers,
+					$attachments
 				);
 
 			}
@@ -346,51 +370,99 @@ if ( ! class_exists( 'Inform_About_Content' ) ) {
 				if ( '1' === $comment_data->comment_approved || $comment_status ) {
 					// get data from post to this comment
 					$post_data = get_post( $comment_data->comment_post_ID );
-					// the comment author
-					$user = get_userdata( $comment_data->user_id );
+
+					// the commenter
+					$commenter = array(
+						'name'  => 'Annonymous',
+						'email' => '',
+						'url'   => ''
+					);
+
+					if ( 0 != $comment_data->user_id && $user = get_userdata( $comment_data->user_id ) ) {
+						// the comment author
+						$user = get_userdata( $comment_data->user_id );
+						$commenter[ 'name' ]  = get_the_author_meta( 'display_name', $user->ID );
+						$commenter[ 'email' ] = $user->data->user_email;
+						$commenter[ 'url' ]   = $user->data->user_url;
+					} else {
+						if ( ! empty( $comment_data->comment_author ) )
+							$commenter[ 'name' ] = $comment_data->comment_author;
+
+						# don't propagate email-address of non-registered users by default
+						if ( ! empty( $comment_data->comment_author_email ) ) {
+							if ( TRUE === apply_filters( 'iac_comment_author_email_to_header', FALSE ) )
+								$commenter[ 'email' ] = $comment_data->comment_author_email;
+						}
+
+						if ( ! empty( $comment_data->comment_author_url ) )
+							$commenter[ 'url' ] = $comment_data->comment_author_url;
+					}
 
 					// email addresses
-					$to = $this->get_members( $user->data->user_email, 'comment' );
+					$to = $this->get_members( $commenter[ 'email' ], 'comment' );
 					if ( empty( $to ) )
 						return $comment_id;
 
 					// email subject
 					$subject = get_bloginfo( 'name' ) . ': ' . get_the_title( $post_data->ID );
 					// message content
-					$message = $comment_data->comment_content . ' ' . PHP_EOL .
-						$this->mail_string_by . ' ' .
-						get_the_author_meta( 'display_name', $user->ID ) . ' ' .
-						$this->mail_string_to . ' ' .
-						get_the_title( $post_data->ID ) . ' ' . PHP_EOL .
-						$this->mail_string_url . ': ' .
-						get_permalink( $post_data->ID );
+					$message = array(
+						#comment content
+						$comment_data->comment_content,
+						#author and title
+						implode( ' ', array(
+							$this->mail_string_by,
+							$commenter[ 'name' ],
+							$this->mail_string_to,
+							get_the_title( $post_data->ID ),
+						) ),
+						# the posts permalink
+						implode( ': ', array(
+							$this->mail_string_url,
+							get_permalink( $post_data->ID )
+						) )
+					);
+					$message = implode( PHP_EOL, $message );
 
 					// create header data
 					$headers = array();
-					$headers[ 'From' ] =
-						get_the_author_meta( 'display_name', $user->ID ) .
-						' (' . get_bloginfo( 'name' ) . ')' .
-						' <' . $user->data->user_email . '>';
+					if ( ! empty( $commenter[ 'email' ] ) ) {
+						$headers[ 'From' ] =
+							$commenter[ 'name' ] .
+							' (' . get_bloginfo( 'name' ) . ')' .
+							' <' . $commenter[ 'email' ] . '>';
+					} else {
+						$headers[ 'From' ] =
+							$commenter[ 'name' ] .
+							' (' . get_bloginfo( 'name' ) . ')' .
+							' <' . get_option( 'admin_email' ) . '>';
+					}
 
 					if ( $this->options[ 'send_by_bcc' ] ) {
+						#copy list of recipients to 'bcc'
 						$bcc = $to;
-						$to = get_bloginfo( 'admin_email' );
+						# set a 'To' header
+						$to = empty( $this->options[ 'bcc_to_recipient' ] )
+							? get_bloginfo( 'admin_email' )
+							: $this->options[ 'bcc_to_recipient' ];
 						$headers[ 'Bcc' ] = $bcc;
 					}
 
-					$to      = apply_filters( 'iac_comment_to',      $to,      $this->options );
-					$subject = apply_filters( 'iac_comment_subject', $subject, $this->options );
-					$message = apply_filters( 'iac_comment_message', $message, $this->options );
-					$headers = apply_filters( 'iac_comment_headers', $headers, $this->options );
+					$to          = apply_filters( 'iac_comment_to',          $to,      $this->options, $comment_id );
+					$subject     = apply_filters( 'iac_comment_subject',     $subject, $this->options, $comment_id );
+					$message     = apply_filters( 'iac_comment_message',     $message, $this->options, $comment_id );
+					$headers     = apply_filters( 'iac_comment_headers',     $headers, $this->options, $comment_id );
+					$attachments = apply_filters( 'iac_comment_attachments', array(),  $this->options, $comment_id );
+					$signature   = apply_filters( 'iac_comment_signature',   '',       $this->options, $comment_id );
 
-					// send mail
 					$this->send_mail(
 						$to,
-						$subject, // email subject
-						$message, // message content
-						$headers // headers
+						$subject,
+						$this->append_signature( $message, $signature ),
+						$headers,
+						$attachments
 					);
-					
+
 				}
 			}
 
@@ -405,24 +477,42 @@ if ( ! class_exists( 'Inform_About_Content' ) ) {
 		 * @param string $subject
 		 * @param string $message
 		 * @param  array $headers
+		 * @param  array $attachments
 		 * @return  bool
 		 */
-		public function send_mail( $to, $subject = '', $message = '', $headers = array() ) {
+		public function send_mail( $to, $subject = '', $message = '', $headers = array(), $attachments = array() ) {
 
 			foreach ( $headers as $k => $v ) {
-				
+
 				$headers[] = $k . ': ' . $v;
 				unset( $headers[ $k ] );
 			}
-			$headers = implode( PHP_EOL, $headers ) . PHP_EOL;
 
 			return wp_mail(
 				$to,
 				$subject,
 				$message,
-				$headers
+				$headers,
+				$attachments
 			);
+		}
 
+		/**
+		 * apply a signature-text to the email message
+		 *
+		 * @since 0.0.6 (2013.01.13)
+		 * @param string $message,
+		 * @param string $signature (Optional)
+		 * @return string
+		 */
+		public function append_signature( $message, $signature = '' ) {
+
+			if ( empty( $signature ) )
+				return $message;
+
+			$separator = apply_filters( 'iac_signature_separator', str_repeat( PHP_EOL, 2 ) . '--' . PHP_EOL );
+
+			return $message . $separator . $signature;
 		}
 
 		/**
@@ -433,10 +523,10 @@ if ( ! class_exists( 'Inform_About_Content' ) ) {
 		 * @return array
 		 */
 		public function get_options( $default = NULL ) {
-			
+
 			if ( ! empty( $this->options ) )
 				return $this->options;
-			
+
 			return $default;
 		}
 
@@ -450,7 +540,7 @@ if ( ! class_exists( 'Inform_About_Content' ) ) {
 		public static function load_class( $class_name ) {
 
 			$file_name = dirname( __FILE__ ) . '/inc/class-' . $class_name . '.php';
-			
+
 			if ( file_exists( $file_name ) )
 				require_once $file_name;
 		}
