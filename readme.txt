@@ -2,7 +2,7 @@
 Contributors: inpsyde, Bueltge, dnaber-de, hughwillfayle
 Tags: mail, comment, post
 Requires at least: 3.0
-Tested up to: 3.9
+Tested up to: 4.0
 Stable tag: 0.0.5
 
 Informs all users of a blog about a new post and approved comments via email
@@ -21,12 +21,13 @@ Please give me feedback, contribute and file technical bugs on [GitHub Repo](htt
 == Installation ==
 = Requirements  =
 * WordPress version 3.0 and later (see tested up to)
-* PHP 5.3
+* PHP 5.3; maybe 5.2, but untested
 
 = Installation =
 1. Unpack the download-package
 1. Upload the folder and all folder and files includes this to the `/wp-content/plugins/` directory
 1. Activate the plugin through the 'Plugins' menu in WordPress
+1. Optional: Change global settings on 'Settings' --> 'Reading'
 1. Thats all
 
 
@@ -74,6 +75,19 @@ The plugin comes with various translations, please refer to the [WordPress Codex
 
 
 == Changelog ==
+= 0.0.6 =
+* Change Hook for send only on published posts
+* Change Mail-header for use in all systems
+* Codestyling
+* API for e-mail signature Hook `iac_signature_separator`; Function `append_signature( $message, $signature = '' )`
+* BCC possibility
+* Add new filters, like shortocodes
+* Add settings to global default options on 'Reading'
+* Start to handle medias, attachments
+* Change autoloader to also usable without spl
+* Change hook to `transition_post_status` to change send mail - now send only on new posts, not update posts
+* Update language files
+
 = 0.0.5 =
 * Option to send email by Bcc-header
 * API to change the plugins default behaviour (opt-in/opt-out)
